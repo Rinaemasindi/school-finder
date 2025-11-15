@@ -61,20 +61,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
-# Copy package.json for scripts (needed for db:seed)
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-
-# Copy seed script and dependencies (needed if seeding data)
-COPY --from=builder --chown=nextjs:nodejs /app/src/scripts ./src/scripts
-
-# Copy additional node_modules needed for seeding (tsx, xlsx)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/xlsx ./node_modules/xlsx
-
-# Copy entrypoint script for automated database setup
-COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 USER nextjs
 
 EXPOSE 3000
@@ -82,5 +68,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

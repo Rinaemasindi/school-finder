@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <div className="container px-4 py-3 sm:py-4 max-w-7xl mx-auto">
+    <div className="container px-4 py-3 sm:py-4 max-w-7xl mx-auto pb-20 md:pb-8">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">

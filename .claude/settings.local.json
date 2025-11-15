@@ -20,7 +20,11 @@
       "Bash(npm run db:push:*)",
       "Bash(curl:*)",
       "Bash(git stash:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(timeout /t 5)",
+      "Bash(npm run db:seed:*)"
     ],
     "deny": [],
     "ask": []

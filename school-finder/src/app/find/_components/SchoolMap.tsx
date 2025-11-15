@@ -124,11 +124,6 @@ export function SchoolMap({ schools, center, zoom, onSchoolClick, selectedSchool
             >
               <Popup>
                 <div className="p-2 min-w-[200px]">
-                  {isSelected && (
-                    <div className="mb-2 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">
-                      ⭐ Your Selected School
-                    </div>
-                  )}
                   <Link
                     href={`/school/${school.id}`}
                     className="font-semibold hover:text-primary text-sm block mb-2 flex items-center gap-1.5"

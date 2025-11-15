@@ -220,63 +220,30 @@ export function AdvancedFilters({
 
   const FilterContent = () => (
     <div className="space-y-4">
-      {/* Primary Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <SearchableSelect
-          value={selectedSector}
-          onValueChange={onSectorChange}
-          options={filterOptions.sectors}
-          placeholder="Sector"
-        />
+      {/* Location Filters - Prioritized */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium">Location</h3>
+          {[selectedProvince, selectedDistrict, selectedMunicipality, selectedTownship, selectedSuburb, selectedCity]
+            .filter((v) => v !== 'all')
+            .length > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {[selectedProvince, selectedDistrict, selectedMunicipality, selectedTownship, selectedSuburb, selectedCity]
+                .filter((v) => v !== 'all')
+                .length}
+            </Badge>
+          )}
+        </div>
 
-        <SearchableSelect
-          value={selectedPhase}
-          onValueChange={onPhaseChange}
-          options={filterOptions.phases}
-          placeholder="Phase"
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Province - Prioritized */}
+          <SearchableSelect
+            value={selectedProvince}
+            onValueChange={onProvinceChange}
+            options={filterOptions.provinces}
+            placeholder="Province"
+          />
 
-        <SearchableSelect
-          value={selectedQuintile}
-          onValueChange={onQuintileChange}
-          options={filterOptions.quintiles}
-          placeholder="Quintile"
-        />
-
-        <SearchableSelect
-          value={feeStatus}
-          onValueChange={onFeeStatusChange}
-          options={['free', 'paid']}
-          placeholder="Fee Status"
-        />
-
-        <SearchableSelect
-          value={selectedProvince}
-          onValueChange={onProvinceChange}
-          options={filterOptions.provinces}
-          placeholder="Province"
-        />
-
-        <Button
-          variant={verifiedOnly ? 'default' : 'outline'}
-          onClick={() => onVerifiedChange(!verifiedOnly)}
-          className="h-9 text-sm"
-        >
-          Verified
-        </Button>
-      </div>
-
-      {/* Location Filters */}
-      <details className="group">
-        <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium hover:text-primary">
-          <span>Location Filters</span>
-          <Badge variant="secondary" className="text-xs">
-            {[selectedDistrict, selectedMunicipality, selectedTownship, selectedSuburb, selectedCity]
-              .filter((v) => v !== 'all')
-              .length}
-          </Badge>
-        </summary>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
           <SearchableSelect
             value={selectedDistrict}
             onValueChange={onDistrictChange}
@@ -311,6 +278,55 @@ export function AdvancedFilters({
             options={filterOptions.cities}
             placeholder="Town/City"
           />
+        </div>
+      </div>
+
+      {/* More Filters - Collapsible */}
+      <details className="group">
+        <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium hover:text-primary">
+          <span>More Filters</span>
+          <Badge variant="secondary" className="text-xs">
+            {[selectedSector !== 'all', selectedPhase !== 'all', selectedQuintile !== 'all', feeStatus !== 'all', verifiedOnly]
+              .filter(Boolean)
+              .length}
+          </Badge>
+        </summary>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+          <SearchableSelect
+            value={selectedSector}
+            onValueChange={onSectorChange}
+            options={filterOptions.sectors}
+            placeholder="Sector"
+          />
+
+          <SearchableSelect
+            value={selectedPhase}
+            onValueChange={onPhaseChange}
+            options={filterOptions.phases}
+            placeholder="Phase"
+          />
+
+          <SearchableSelect
+            value={selectedQuintile}
+            onValueChange={onQuintileChange}
+            options={filterOptions.quintiles}
+            placeholder="Quintile"
+          />
+
+          <SearchableSelect
+            value={feeStatus}
+            onValueChange={onFeeStatusChange}
+            options={['free', 'paid']}
+            placeholder="Fee Status"
+          />
+
+          <Button
+            variant={verifiedOnly ? 'default' : 'outline'}
+            onClick={() => onVerifiedChange(!verifiedOnly)}
+            className="h-9 text-sm"
+          >
+            Verified
+          </Button>
         </div>
       </details>
     </div>

@@ -63,7 +63,7 @@ export default function SchoolDetailPage({ params }: PageProps) {
   }, [id, router]);
 
   return (
-    <div className="container px-4 py-6 sm:py-8 max-w-7xl mx-auto">
+    <div className="container px-4 py-6 sm:py-8 max-w-7xl mx-auto pb-20 md:pb-8">
       {/* Back Button */}
       <Button
         variant="ghost"

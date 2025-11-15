@@ -16,6 +16,19 @@ const PROVINCE_MAP: { [key: string]: string } = {
 
 export async function GET() {
   try {
+    // Custom sort function: A-Z first, then special characters/numbers
+    const alphabeticalSort = (a: string, b: string): number => {
+      const aStartsWithLetter = /^[a-zA-Z]/.test(a);
+      const bStartsWithLetter = /^[a-zA-Z]/.test(b);
+
+      // If one starts with letter and other doesn't, letter comes first
+      if (aStartsWithLetter && !bStartsWithLetter) return -1;
+      if (!aStartsWithLetter && bStartsWithLetter) return 1;
+
+      // Otherwise, normal alphabetical sort (case-insensitive)
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    };
+
     // Fetch all schools to get unique values
     const schools = await prisma.school.findMany({
       select: {
@@ -72,7 +85,7 @@ export async function GET() {
           .map((v) => normalizeSector(v.trim()))
           .filter((v): v is string => v !== null)
       )
-    ).sort();
+    ).sort(alphabeticalSort);
 
     const phases = Array.from(
       new Set(
@@ -82,7 +95,7 @@ export async function GET() {
           .map((v) => normalizePhase(v.trim()))
           .filter((v): v is string => v !== null)
       )
-    ).sort();
+    ).sort(alphabeticalSort);
 
     const quintiles = Array.from(
       new Set(
@@ -104,15 +117,37 @@ export async function GET() {
           .filter((v): v is string => v != null && v.trim() !== '')
           .map((v) => normalizeProvince(v))
       )
-    ).sort();
+    ).sort(alphabeticalSort);
+
+    // Filter function to remove numeric-only and special character entries
+    const isValidFilterOption = (value: string): boolean => {
+      // Remove entries that are:
+      // 1. Purely numeric (e.g., "325", "419")
+      // 2. Only contain numbers and quotes (e.g., '325"', '419"')
+      // 3. Less than 3 characters (likely codes)
+      const trimmed = value.trim();
+
+      // Check if it's purely numeric (with optional quotes or special chars)
+      if (/^[\d\s"'\.,-]+$/.test(trimmed)) {
+        return false;
+      }
+
+      // Require at least 3 characters and contain at least one letter
+      if (trimmed.length < 3 || !/[a-zA-Z]/.test(trimmed)) {
+        return false;
+      }
+
+      return true;
+    };
 
     // Standard unique values for location fields
     const getUniqueValues = (field: keyof typeof schools[0]) => {
       const values = schools
         .map((s) => s[field])
         .filter((v): v is string => v != null && v.trim() !== '')
-        .map((v) => v.trim());
-      return Array.from(new Set(values)).sort();
+        .map((v) => v.trim())
+        .filter(isValidFilterOption); // Filter out invalid options
+      return Array.from(new Set(values)).sort(alphabeticalSort);
     };
 
     return NextResponse.json({

@@ -200,7 +200,7 @@ export default function FindSchoolsPage() {
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-          Find Schools on Map
+          Find Schools
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Search for a school to see it on the map with nearby schools
