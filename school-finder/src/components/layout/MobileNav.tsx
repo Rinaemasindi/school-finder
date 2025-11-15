@@ -1,86 +1,83 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, School, Map, BarChart3, List, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { School, Map, BarChart3, HelpCircle, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'Browse', icon: List },
   { href: '/find', label: 'Find', icon: Map },
+  { href: '/browse', label: 'Browse', icon: List },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/help', label: 'Help', icon: HelpCircle },
 ];
 
 export function MobileNav() {
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <School className="h-6 w-6" />
-          <span className="font-bold text-sm sm:text-base">SA Schools</span>
-        </Link>
+    <>
+      {/* Top Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center justify-between px-4">
+          {/* Logo - Icon only on mobile, with text on desktop */}
+          <Link href="/find" className="flex items-center space-x-2">
+            <School className="h-6 w-6" />
+            <span className="hidden sm:block font-bold text-sm sm:text-base">SA Schools</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex ml-auto space-x-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'text-sm font-medium transition-colors hover:text-primary',
-                pathname === item.href
-                  ? 'text-foreground'
-                  : 'text-muted-foreground'
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      </div>
-
-      {/* Mobile Navigation Menu */}
-      {isOpen && (
-        <div className="md:hidden border-t">
-          <nav className="container px-4 py-4 space-y-3">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-6">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const isActive = pathname === item.href || (pathname === '/' && item.href === '/find');
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsOpen(false)}
                   className={cn(
-                    'flex items-center space-x-3 px-3 py-2 rounded-md transition-colors',
-                    pathname === item.href
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-accent'
+                    'flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary',
+                    isActive
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
         </div>
-      )}
-    </header>
+      </header>
+
+      {/* Mobile Bottom Navigation - Icon Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-around px-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (pathname === '/' && item.href === '/find');
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[60px]',
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Icon className={cn('h-5 w-5', isActive && 'fill-primary/20')} />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Add bottom padding to content so it doesn't hide behind mobile nav */}
+      <div className="md:hidden h-16" />
+    </>
   );
 }

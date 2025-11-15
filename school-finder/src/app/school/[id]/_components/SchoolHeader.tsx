@@ -1,11 +1,20 @@
 'use client';
 
-import { School } from '@/types/school';
+import { SchoolDisplay } from '@/types/school';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface SchoolHeaderProps {
-  school: School;
+  school: SchoolDisplay;
+}
+
+// Clean school name by removing special characters
+function cleanSchoolName(name: string): string {
+  // Remove special characters but keep letters, numbers, spaces, hyphens, apostrophes, and basic punctuation
+  return name
+    .replace(/[^\w\s'-.,()]/g, '') // Keep alphanumeric, spaces, hyphens, apostrophes, periods, commas, parentheses
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
 }
 
 export function SchoolHeader({ school }: SchoolHeaderProps) {
@@ -14,10 +23,10 @@ export function SchoolHeader({ school }: SchoolHeaderProps) {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-            {school.name}
+            {cleanSchoolName(school.name)}
           </h1>
           <p className="text-muted-foreground">
-            {school.city}, {school.province}
+            {school.city || 'Unknown'}, {school.province}
           </p>
         </div>
         <div className="flex items-center gap-2 self-start">

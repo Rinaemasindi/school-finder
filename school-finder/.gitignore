@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# data import files (keep structure, ignore Excel files)
+data-import/excel-files/*.xlsx
+data-import/excel-files/*.xls

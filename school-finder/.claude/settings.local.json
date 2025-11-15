@@ -1,7 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm prisma init:*)",
+      "Bash(pnpm build:*)",
+      "Bash(docker compose:*)",
+      "Bash(pnpm db:push:*)",
+      "Bash(pnpm db:seed:*)",
+      "Bash(npx tsx:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(nul)",
+      "Bash(npx next build)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

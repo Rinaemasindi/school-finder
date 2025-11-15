@@ -1,41 +1,79 @@
-# Base stage - Install dependencies
+# Optimized Multi-stage Dockerfile for Next.js + Prisma with npm
 FROM node:20-alpine AS base
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install dependencies only when needed
+RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
-# Dependencies stage
+# Install dependencies
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json* ./
+RUN npm ci
 
-# Builder stage
+# Rebuild the source code only when needed
 FROM base AS builder
+
+# Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy application code and prisma schema
 COPY . .
 
-# Generate Prisma Client
-RUN pnpm prisma generate
+# Generate Prisma Client BEFORE building Next.js
+# This ensures Prisma is available during the build process
+RUN npx prisma generate
 
-# Build Next.js app
+# Set environment for build
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+ENV DOCKER_BUILD=true
 
-# Runner stage
+# Build Next.js application
+RUN npm run build
+
+# Production image, copy all the files and run next
 FROM base AS runner
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create system user and group
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
+# Copy public assets
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma ./prisma
+
+# Set the correct permission for prerender cache
+RUN mkdir .next && chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma schema for migrations/studio if needed
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Copy Prisma Client and CLI from builder's node_modules
+# npm has a simple node_modules structure, so these paths will exist
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+
+# Copy package.json for scripts (needed for db:seed)
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+# Copy seed script and dependencies (needed if seeding data)
+COPY --from=builder --chown=nextjs:nodejs /app/src/scripts ./src/scripts
+
+# Copy additional node_modules needed for seeding (tsx, xlsx)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/xlsx ./node_modules/xlsx
+
+# Copy entrypoint script for automated database setup
+COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
 
@@ -44,4 +82,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

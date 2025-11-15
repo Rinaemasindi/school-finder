@@ -13,7 +13,14 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(timeout /t 3)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm install:*)",
+      "Bash(docker logs:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(curl:*)",
+      "Bash(git stash:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Core Identifiers
+  natEMIS                      String   @unique
+  datayear                     Int
+  oldNATEMIS                   String?
+  newNATEMIS                   String?
+
+  // Basic Information
+  officialInstitutionName      String
+  status                       String
+  sector                       String
+  typeDOE                      String
+  phasePED                     String
+  specialization               String?
+
+  // Location - Coordinates
+  newLat                       Float?
+  newLong                      Float?
+  gisSource                    String?
+
+  // Location - Administrative
+  province                     String
+  provinceCD                   String
+  districtMunicipalityCode     String?
+  districtMunicipalityName     String?
+  localMunicipalityName        String?
+  wardID                       String?
+
+  // Location - Address
+  township                     String?
+  suburb                       String?
+  townCity                     String?
+  streetAddress                String?
+  postalAddress                String?
+
+  // Ownership & Department
+  ownerLand                    String?
+  ownerBuildings               String?
+  exDept                       String?
+
+  // Administrative Codes
+  paypointNo                   String?
+  componentNo                  String?
+  examNo                       String?
+  examCentre                   String?
+
+  // Regional Structure
+  spCode                       String?
+  spName                       String?
+  eiRegion                     String?
+  eiDistrict                   String?
+  eiCircuit                    String?
+
+  // Contact
+  addrInit                     String?
+  addressee                    String?
+  telephone                    String?
+
+  // School Classification
+  section21                    String?
+  section21Funct               String?
+  quintile                     String?
+  nas                          String?
+  nodalArea                    String?
+  noFeeSchool                  String?
+  registrationDate             String?
+
+  // Allocation & Movement
+  allocation                   String?
+  demarcationFrom              String?
+  demarcationTo                String?
+
+  // Statistics
+  learners2019                 Int?
+  educator2019                 Int?
+
+  @@index([natEMIS])
+  @@index([province])
+  @@index([sector])
+  @@index([phasePED])
+  @@index([quintile])
+  @@index([townCity])
+  @@index([districtMunicipalityName])
+}

@@ -6,9 +6,9 @@ import { HelpCircle, School, GraduationCap, Building, CheckCircle } from 'lucide
 
 export default function HelpPage() {
   return (
-    <div className="container px-4 py-6 sm:py-8 max-w-4xl mx-auto">
+    <div className="container px-4 py-3 sm:py-4 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-6 sm:mb-8 text-center">
+      <div className="mb-4 sm:mb-6 text-center">
         <div className="flex justify-center mb-4">
           <div className="p-3 bg-primary/10 rounded-full">
             <HelpCircle className="h-8 w-8 text-primary" />

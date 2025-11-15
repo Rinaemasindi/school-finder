@@ -1,25 +1,68 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { School } from '@/types/school';
+import { SchoolDisplay } from '@/types/school';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { ExternalLink } from 'lucide-react';
 
-// Fix for default marker icons in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+// Declare icons as variables that will be initialized client-side
+let defaultIcon: L.Icon | null = null;
+let selectedIcon: L.Icon | null = null;
+
+// Initialize icons only on client side
+if (typeof window !== 'undefined') {
+  // Fix for default marker icons in Next.js
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+  // Create default blue icon
+  defaultIcon = new L.Icon({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  // Create custom icon for selected school (red marker)
+  selectedIcon = new L.Icon({
+    iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  // Set default icon for L.Icon.Default
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+}
+
+// Clean school name by removing special characters
+function cleanSchoolName(name: string): string {
+  // Remove special characters but keep letters, numbers, spaces, hyphens, apostrophes, and basic punctuation
+  return name
+    .replace(/[^\w\s'-.,()]/g, '') // Keep alphanumeric, spaces, hyphens, apostrophes, periods, commas, parentheses
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
+}
 
 interface SchoolMapProps {
-  schools: School[];
+  schools: SchoolDisplay[];
   center: [number, number];
   zoom: number;
+  onSchoolClick?: (school: SchoolDisplay) => void;
+  selectedSchoolId?: string;
 }
 
 function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -32,9 +75,9 @@ function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }
   return null;
 }
 
-export function SchoolMap({ schools, center, zoom }: SchoolMapProps) {
+export function SchoolMap({ schools, center, zoom, onSchoolClick, selectedSchoolId }: SchoolMapProps) {
   return (
-    <div className="h-[400px] sm:h-[500px] lg:h-[600px] w-full rounded-lg overflow-hidden border">
+    <div className="h-[400px] sm:h-[500px] lg:h-[600px] w-full rounded-lg overflow-hidden border relative z-0">
       <MapContainer
         center={center}
         zoom={zoom}
@@ -47,37 +90,73 @@ export function SchoolMap({ schools, center, zoom }: SchoolMapProps) {
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        {schools.map((school) => (
-          <Marker
-            key={school.id}
-            position={[school.latitude, school.longitude]}
-          >
-            <Popup>
-              <div className="p-2 min-w-[200px]">
-                <Link
-                  href={`/school/${school.id}`}
-                  className="font-semibold hover:text-primary text-sm block mb-2"
-                >
-                  {school.name}
-                </Link>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  <Badge variant="outline" className="text-xs">
-                    {school.sector}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {school.phase}
-                  </Badge>
+        {schools.map((school) => {
+          // Skip schools without coordinates
+          if (!school.latitude || !school.longitude) return null;
+
+          // Validate South African coordinates
+          // Latitude should be negative (Southern Hemisphere: -22° to -35°)
+          // Longitude should be positive (Eastern Hemisphere: 16° to 33°)
+          const isValidCoordinate =
+            school.latitude < 0 &&
+            school.latitude >= -35 &&
+            school.latitude <= -22 &&
+            school.longitude > 0 &&
+            school.longitude >= 16 &&
+            school.longitude <= 33;
+
+          if (!isValidCoordinate) return null;
+
+          const isSelected = school.id === selectedSchoolId;
+
+          return (
+            <Marker
+              key={school.id}
+              position={[school.latitude, school.longitude]}
+              icon={isSelected ? (selectedIcon || undefined) : (defaultIcon || undefined)}
+              eventHandlers={{
+                click: () => {
+                  if (onSchoolClick) {
+                    onSchoolClick(school);
+                  }
+                },
+              }}
+            >
+              <Popup>
+                <div className="p-2 min-w-[200px]">
+                  {isSelected && (
+                    <div className="mb-2 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">
+                      ⭐ Your Selected School
+                    </div>
+                  )}
+                  <Link
+                    href={`/school/${school.id}`}
+                    className="font-semibold hover:text-primary text-sm block mb-2 flex items-center gap-1.5"
+                  >
+                    {cleanSchoolName(school.name)}
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  </Link>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <Badge variant="outline" className="text-xs">
+                      {school.sector}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {school.phase}
+                    </Badge>
+                  </div>
+                  {school.learners && (
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {school.learners.toLocaleString('en-US')} learners
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {school.city || 'Unknown'}, {school.province}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  {school.learners.toLocaleString('en-US')} learners
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {school.city}, {school.province}
-                </p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

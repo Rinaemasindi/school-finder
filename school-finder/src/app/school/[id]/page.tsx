@@ -1,12 +1,26 @@
 'use client';
 
-import { use } from 'react';
-import { notFound, useRouter } from 'next/navigation';
-import { mockSchools } from '@/data/mockSchools';
+import { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { SchoolDisplay, toSchoolDisplay } from '@/types/school';
 import { SchoolHeader } from './_components/SchoolHeader';
 import { SchoolInfo } from './_components/SchoolInfo';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+
+// Dynamically import the map to avoid SSR issues with Leaflet
+const SchoolLocationMap = dynamic(
+  () => import('./_components/SchoolLocationMap').then((mod) => mod.SchoolLocationMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-6 h-[400px] w-full rounded-lg border flex items-center justify-center bg-muted">
+        <p className="text-muted-foreground">Loading map...</p>
+      </div>
+    ),
+  }
+);
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -15,11 +29,38 @@ interface PageProps {
 export default function SchoolDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const school = mockSchools.find((s) => s.id === id);
+  const [school, setSchool] = useState<SchoolDisplay | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!school) {
-    notFound();
-  }
+  useEffect(() => {
+    const fetchSchool = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/schools/${id}`);
+
+        if (response.status === 404) {
+          router.push('/404');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch school');
+        }
+
+        const data = await response.json();
+        setSchool(toSchoolDisplay(data));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchool();
+  }, [id, router]);
 
   return (
     <div className="container px-4 py-6 sm:py-8 max-w-7xl mx-auto">
@@ -34,28 +75,50 @@ export default function SchoolDetailPage({ params }: PageProps) {
         Back
       </Button>
 
-      {/* School Header */}
-      <div className="mb-6 sm:mb-8">
-        <SchoolHeader school={school} />
-      </div>
-
-      {/* School Information */}
-      <SchoolInfo school={school} />
-
-      {/* Location Coordinates Card */}
-      <div className="mt-6 p-4 bg-muted rounded-lg">
-        <h3 className="font-medium mb-2">Location Coordinates</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-          <div>
-            <span className="text-muted-foreground">Latitude:</span>{' '}
-            <span className="font-mono">{school.latitude}</span>
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+            <span className="sr-only">Loading...</span>
           </div>
-          <div>
-            <span className="text-muted-foreground">Longitude:</span>{' '}
-            <span className="font-mono">{school.longitude}</span>
-          </div>
+          <p className="mt-4 text-muted-foreground">Loading school details...</p>
         </div>
-      </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="text-center py-12">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* School Content */}
+      {school && !loading && !error && (
+        <>
+          {/* School Header */}
+          <div className="mb-6 sm:mb-8">
+            <SchoolHeader school={school} />
+          </div>
+
+          {/* School Information */}
+          <SchoolInfo school={school} />
+
+          {/* Location Map */}
+          {school.latitude && school.longitude && (
+            <SchoolLocationMap
+              latitude={school.latitude}
+              longitude={school.longitude}
+              schoolName={school.name}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
